@@ -1,0 +1,171 @@
+{
+    "name": "Bronze_Ingest_Orders",
+    "properties": {
+        "description": "Ingest orders data from source to Bronze layer with optimized settings",
+        "activities": [
+            {
+                "name": "Copy_Orders_Data",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "DelimitedTextSource",
+                        "storeSettings": {
+                            "type": "AzureBlobFSReadSettings",
+                            "recursive": true,
+                            "wildcardFileName": "orders*.csv",
+                            "enablePartitionDiscovery": true
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextReadSettings",
+                            "skipLineCount": 1
+                        }
+                    },
+                    "sink": {
+                        "type": "DelimitedTextSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextWriteSettings",
+                            "quoteAllText": true,
+                            "fileExtension": ".csv"
+                        }
+                    },
+                    "enableStaging": false,
+                    "parallelCopies": 8,
+                    "dataIntegrationUnits": 8,
+                    "enableSkipIncompatibleRow": true
+                },
+                "inputs": [
+                    {
+                        "referenceName": "SourceOrdersCSV",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "BronzeOrdersCSV",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ]
+            },
+            {
+                "name": "Databricks_Bronze_Processing",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Copy_Orders_Data",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 1,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/notebooks/ingestion/bronze_layer_ingestion",
+                    "baseParameters": {
+                        "data_source": {
+                            "value": "@concat('abfss://', dataset().container, '@', dataset().accountName, '.dfs.core.windows.net/landing/orders')",
+                            "type": "Expression"
+                        },
+                        "source_format": "csv",
+                        "target_table": "bronze.orders",
+                        "partition_cols": "date",
+                        "mode": "incremental",
+                        "watermark_column": "order_date"
+                    },
+                    "libraries": [
+                        {
+                            "pypi": {
+                                "package": "delta-spark==2.3.0"
+                            }
+                        },
+                        {
+                            "maven": {
+                                "coordinates": "io.delta:delta-core_2.12:2.3.0"
+                            }
+                        }
+                    ]
+                },
+                "linkedServiceName": {
+                    "referenceName": "AzureDatabricks",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "Update_Metadata",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "Databricks_Bronze_Processing",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.00:10:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "url": "@{pipeline().parameters.metadataAPIUrl}",
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "body": {
+                        "value": "{\"pipelineId\": \"@{pipeline().RunId}\", \"tableName\": \"orders\", \"layer\": \"bronze\", \"status\": \"complete\", \"timestamp\": \"@{utcnow()}\", \"records_processed\": \"@{activity('Databricks_Bronze_Processing').output.runOutput}\"}"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "windowStart": {
+                "type": "string"
+            },
+            "windowEnd": {
+                "type": "string"
+            },
+            "metadataAPIUrl": {
+                "type": "string",
+                "defaultValue": "https://metadataservice.azurewebsites.net/api/updateMetadata"
+            }
+        },
+        "variables": {
+            "runId": {
+                "type": "String"
+            }
+        },
+        "folder": {
+            "name": "bronze"
+        },
+        "annotations": [
+            "orders",
+            "bronze",
+            "ingestion"
+        ]
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,11 @@
+product_id,product_name,category,manufacturer,description,price,inventory_count,reorder_threshold,weight,dimensions,is_active
+P123,Basic T-Shirt,Clothing,ABC Apparel,"Cotton t-shirt, basic design",29.99,120,25,0.3 lbs,10x8x1 in,TRUE
+P456,Running Shoes,Footwear,Sprint Athletics,"Lightweight running shoes, cushioned sole",49.99,45,10,1.2 lbs,12x8x5 in,TRUE
+P789,Bluetooth Speaker,Electronics,SoundMaster,"Portable bluetooth speaker, 12-hour battery",129.99,30,8,0.8 lbs,6x6x3 in,TRUE
+P101,Coffee Maker,Kitchen,HomeBrew,"Programmable coffee maker, 12-cup capacity",89.95,15,5,4.5 lbs,10x12x15 in,TRUE
+P202,Yoga Mat,Fitness,ZenFit,"Non-slip yoga mat, 6mm thickness",24.99,60,15,2.1 lbs,68x24x0.24 in,TRUE
+P303,Desk Lamp,Home Office,Illuminate,"Adjustable desk lamp, energy-efficient LED",34.50,40,10,1.4 lbs,6x6x18 in,TRUE
+P404,External Hard Drive,Electronics,DataStore,"2TB external hard drive, USB 3.0",79.99,25,8,0.5 lbs,4.5x3x0.75 in,TRUE
+P505,Protein Powder,Nutrition,FitFuel,"Whey protein, vanilla flavor, 2lb container",39.99,50,12,2.2 lbs,8x8x10 in,TRUE
+P606,Winter Jacket,Outerwear,Mountain Gear,"Insulated winter jacket, water-resistant",149.95,20,5,2.8 lbs,NA,TRUE
+P707,Wireless Mouse,Computer Accessories,TechPoint,"Ergonomic wireless mouse, long battery life",19.99,75,20,0.2 lbs,4.5x2.5x1.5 in,TRUE
